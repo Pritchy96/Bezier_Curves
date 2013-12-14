@@ -32,8 +32,7 @@ class MainState : BasicState
     Rectangle p2Rect;
     Rectangle p3Rect;
 
-    //The point which is being moved.
-    int mousePoint;
+    bool mouseDown = false;
 
     public MainState()
     {
@@ -46,7 +45,7 @@ class MainState : BasicState
     public void CalculateBezier()
     {
         //Incrementing i.
-        i += 0.001f;
+        i += 0.01f;
 
         // Calculating guide line coordinates. It uses i to simply move along each line 
         //connecting two of the control coordinates linearly.
@@ -64,7 +63,7 @@ class MainState : BasicState
         //i is the end because it is when the second coordinate for the
         //guide line is at the last control point, and the current point
         // rectangle is at the end of that line.
-        if (i < 1)
+        if (i < 3)
         {
                 CalculateBezier();
                 CalculateBezier();
@@ -74,57 +73,29 @@ class MainState : BasicState
 
     public override void MouseMoved(MouseEventArgs e)
     {
-        //Moving any points the mouse has clicked on.
-        //Sets i to 0 to restart bezier calculation and redraws
-        //the point rectangle.
-        if (mousePoint != 0)
+        if (mouseDown)
         {
-            if (mousePoint == 1)
-            {
-                p1 = e.Location;
-                i = 0;
-                points.Clear();
-                p1Rect = new Rectangle((int)p1.X - 4, (int)p1.Y - 4, 8, 8);
-            }
-            else if (mousePoint == 2)
-            {
-                p2 = e.Location;
-                i = 0;
-                points.Clear();
-                p2Rect = new Rectangle((int)p2.X - 4, (int)p2.Y - 4, 8, 8);
-            }
-            else if (mousePoint == 3)
-            {
-                p3 = e.Location;
-                i = 0;
-                points.Clear();
-                p3Rect = new Rectangle((int)p3.X - 4, (int)p3.Y - 4, 8, 8);
-            }
-        }
+            p1 = e.Location;
+            i = 0;
+            points.Clear();
+            p1Rect = new Rectangle((int)p1.X - 4, (int)p1.Y - 4, 8, 8);
+            p2Rect = new Rectangle((int)p2.X - 4, (int)p2.Y - 4, 8, 8);
+            p3Rect = new Rectangle((int)p3.X - 4, (int)p3.Y - 4, 8, 8);
 
+            p2 = getPoint(p1, p3, 0.5f);
+            p2.Y -= Math.Abs(p1.X - p3.X)/4;
+        }
     }
 
     public override void MouseUp(MouseEventArgs e)
     {
-        //'dropping' any points we had.
-        mousePoint = 0;
+        mouseDown = false;
     }
 
     public override void MouseDown(MouseEventArgs e)
     {
-        //Selecting any points we are over.
-        if (p1Rect.Contains(e.Location))
-        {
-            mousePoint = 1;
-        }
-        else if (p2Rect.Contains(e.Location))
-        {
-            mousePoint = 2;
-        }
-        else if (p3Rect.Contains(e.Location))
-        {
-            mousePoint = 3;
-        }
+            p3 = e.Location;
+            mouseDown = true;
     }
 
     public override void Redraw(PaintEventArgs e)

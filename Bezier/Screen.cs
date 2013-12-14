@@ -101,7 +101,7 @@ using System.Windows.Forms;
                 DrawScreen.Invalidate();
 
                 //Basic Thread Slowing.
-                Thread.Sleep(4);
+                Thread.Sleep(10);
             }
         }
 
