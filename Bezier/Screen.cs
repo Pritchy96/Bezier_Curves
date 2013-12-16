@@ -14,8 +14,8 @@ using System.Windows.Forms;
     public partial class Screen : Form
     {
         //Screen size.
-        public static int WIDTH = 1000;
-        public static int HEIGHT = 1000;
+        public static int WIDTH = 1440;
+        public static int HEIGHT = 900;
 
         //Thread Variables.
         Boolean Running = false;

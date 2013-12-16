@@ -10,9 +10,9 @@ using System.Windows.Forms;
 class MainState : BasicState
 {
     //The three control points from which to draw a Bezier curve.
-    Point p1 = new Point(300, 10);
-    Point p2 = new Point(10, 10);
-    Point p3 = new Point(10, 300);
+    Point p1 = new Point(10, 230);
+    Point p2 = new Point(50, 130);
+    Point p3 = new Point(100, 140);
 
     //The current point being drawn.
     Point currentPoint = new Point();
@@ -21,10 +21,11 @@ class MainState : BasicState
     ArrayList points = new ArrayList();
     ArrayList controlPoints = new ArrayList();
 
-    Rectangle screenSize = new Rectangle(0, 0, 1200, 900);
+    Rectangle screenSize = new Rectangle(0, 0, 1440, 900);
 
     //Incrementer.
     float i = 0;
+    float j = 1;
 
     //The two coordinates of the guide line
     Point line1;
@@ -38,6 +39,7 @@ class MainState : BasicState
         controlPoints.Add(p1);
         controlPoints.Add(p2);
         controlPoints.Add(p3);
+        NewCurve(p1, p2, p3);
     }
 
     public Point CalculateBezierPoint(Point p1, Point p2, Point p3, float i)
@@ -61,6 +63,7 @@ class MainState : BasicState
 
     public void NewCurve(Point p1, Point p2, Point p3)
     {
+        currentPoint = p1;
         controlPoints.Add(p1);
         controlPoints.Add(p2);
         controlPoints.Add(p3);
@@ -69,28 +72,42 @@ class MainState : BasicState
         //i is the end because it is when the second coordinate for the
         //guide line is at the last control point, and the current point
         // rectangle is at the end of that line.
-        while (i < 2 && screenSize.Contains(currentPoint))
+        while (i < 20 && screenSize.Contains(currentPoint))
         {
             i += 0.1f;
             CalculateBezierPoint(p1, p2, p3, i);
 
-            if (currentPoint.Y >= 700)
+            if (j < 2)
             {
-                int x = (currentPoint.X / currentPoint.Y) * 10;
-                double angle1 = Math.Tanh(currentPoint.Y / currentPoint.X);
-                int y = 100;
+                if (currentPoint.Y >= 700)
+                {
+                    Point lastPoint = (Point) points[points.Count - 1];
 
-                Point b = new Point(currentPoint.X + 100, 500);
-                Point c = new Point(currentPoint.X + 200, 600);
+                    float dX = Math.Abs((float)currentPoint.X - (float)lastPoint.X);
+                    float dY = Math.Abs((float)currentPoint.Y - (float)lastPoint.Y);
 
-                i = 0;
+                    float gradient = dY / dX;
 
-                NewCurve(currentPoint, b, c);
-            }
-            else
-            {
+                    int y2 = 700 - (int)(200 / j);
+                    int y3 = 700;
 
-                points.Add(currentPoint);
+                    double angle = Math.Atan(dX / dY) * (180 / Math.PI) ;
+
+                    Point a = new Point(currentPoint.X, 700);
+                    
+                    Point b = new Point((int)((p2.Y / j) * Math.Sin(angle))/2, y2);
+                    Point c = new Point((int)((p2.Y / j) * Math.Sin(angle)), y3);
+                    
+
+                    i = 0;
+                    j++;
+
+                    NewCurve(a, b, c);
+                }
+                else
+                {
+                    points.Add(currentPoint);
+                }
             }
         }
     }
@@ -99,17 +116,34 @@ class MainState : BasicState
     {
         if (mouseDown)
         {
-            p1 = e.Location;
+            Point mouseXY = e.Location;
+
+            //If it's the first point, we don't want to trigger a new curve if it's below
+            //The platform. Therefore, we just make x as far down as it can be.
+            if (mouseXY.Y > 700)
+            {
+                mouseXY.Y = 699;
+            }
+
+            //Setting the curves to null.
             i = 0;
+            j = 1;
             points.Clear();
             controlPoints.Clear();
 
+            //p1 = the current mouse position.
+            p1 = mouseXY;
+            
+
+
             p2 = getPoint(p1, p3, 0.5f);
             p2.Y -= Math.Abs(p1.X - p3.X)/4;
+
+            NewCurve(p1, p2, p3);
         }
 
 
-        NewCurve(p1, p2, p3);
+        
     }
 
     public override void MouseUp(MouseEventArgs e)
@@ -137,16 +171,18 @@ class MainState : BasicState
         e.Graphics.DrawLine(Pens.Black, p2, p3);
 
         //Draw the guide line.
-        e.Graphics.DrawLine(Pens.Green, line1, line2);
+        //e.Graphics.DrawLine(Pens.Green, line1, line2);
 
         //Draw the current point rectangle.
-        e.Graphics.DrawRectangle(Pens.Red, new Rectangle(currentPoint.X - 4, currentPoint.Y - 4, 8, 8));
+        //e.Graphics.DrawRectangle(Pens.Red, new Rectangle(currentPoint.X - 4, currentPoint.Y - 4, 8, 8));
 
         //Draw every pixel in the array of pixels making up the line.
         foreach (Point p in points.ToArray())
         {
             e.Graphics.DrawRectangle(Pens.Red, new Rectangle((int)p.X, (int)p.Y, 1, 1));
         }
+
+        e.Graphics.FillRectangle(Brushes.Gray, new Rectangle(0, 700, 1440, 10));
     }
 
     public Point getPoint(Point point1, Point point2, float perc)
