@@ -35,11 +35,60 @@ class MainState : BasicState
 
     public MainState()
     {
+        NewCurve(p1, p2, p3);
+    }
 
+    public override void Update()
+    {
+
+    }
+
+    public void NewCurve(Point p1, Point p2, Point p3)
+    {
+        currentPoint = p1;
         controlPoints.Add(p1);
         controlPoints.Add(p2);
         controlPoints.Add(p3);
-        NewCurve(p1, p2, p3);
+
+        //IF we are not at the end, calculate another few points.
+        //i is the end because it is when the second coordinate for the
+        //guide line is at the last control point, and the current point
+        // rectangle is at the end of that line.
+        while (i < 50 && screenSize.Contains(currentPoint))
+        {
+            i += 0.1f;
+            CalculateBezierPoint(p1, p2, p3, i);
+
+            if (currentPoint.Y >= 700)
+            {
+                Point lastPoint = (Point)points[points.Count - 1];
+
+                float dX = (float)currentPoint.X - (float)lastPoint.X;
+                float dY = (float)lastPoint.Y - (float)currentPoint.Y;
+
+                float gradient = Math.Abs(dY / dX);
+
+                int height = 700 - (int)(400 / j);
+                int width = (int)((float) (400/j) / gradient);
+
+                if (width < 5)
+                {
+                    break;
+                }
+
+                Point a = new Point(currentPoint.X, 700);
+                Point b = new Point(currentPoint.X + width / 2, height);
+                Point c = new Point(currentPoint.X + width, 700);
+
+                j ++;
+                i = 0;
+                NewCurve(a, b, c);
+            }
+            else
+            {
+                points.Add(currentPoint);
+            }
+        }
     }
 
     public Point CalculateBezierPoint(Point p1, Point p2, Point p3, float i)
@@ -55,61 +104,16 @@ class MainState : BasicState
         return currentPoint;
     }
 
-    public override void Update()
+    public Point getPoint(Point point1, Point point2, float perc)
     {
-       
-    }
+        //Finds the distance between two points and then multiplies
+        //it by a percentage to find a position between them.
+        //As the curve progresses it goes further along the guide line
+        //as it multiplies it by a bigger percentage (i).
+        Point length = new Point(point2.X - point1.X, point2.Y - point1.Y);
 
-
-    public void NewCurve(Point p1, Point p2, Point p3)
-    {
-        currentPoint = p1;
-        controlPoints.Add(p1);
-        controlPoints.Add(p2);
-        controlPoints.Add(p3);
-
-        //IF we are not at the end, calculate another few points.
-        //i is the end because it is when the second coordinate for the
-        //guide line is at the last control point, and the current point
-        // rectangle is at the end of that line.
-        while (i < 20 && screenSize.Contains(currentPoint))
-        {
-            i += 0.1f;
-            CalculateBezierPoint(p1, p2, p3, i);
-
-            if (j < 2)
-            {
-                if (currentPoint.Y >= 700)
-                {
-                    Point lastPoint = (Point) points[points.Count - 1];
-
-                    float dX = Math.Abs((float)currentPoint.X - (float)lastPoint.X);
-                    float dY = Math.Abs((float)currentPoint.Y - (float)lastPoint.Y);
-
-                    float gradient = dY / dX;
-
-                    int y2 = 700 - (int)(200 / j);
-                    int y3 = 700;
-
-                    double angle = Math.Atan(dX / dY) * (180 / Math.PI) ;
-
-                    Point a = new Point(currentPoint.X, 700);
-                    
-                    Point b = new Point((int)((p2.Y / j) * Math.Sin(angle))/2, y2);
-                    Point c = new Point((int)((p2.Y / j) * Math.Sin(angle)), y3);
-                    
-
-                    i = 0;
-                    j++;
-
-                    NewCurve(a, b, c);
-                }
-                else
-                {
-                    points.Add(currentPoint);
-                }
-            }
-        }
+        Point point = new Point((int)(point1.X + (length.X * perc)), (int)(point1.Y + (length.Y * perc)));
+        return point;
     }
 
     public override void MouseMoved(MouseEventArgs e)
@@ -133,10 +137,10 @@ class MainState : BasicState
 
             //p1 = the current mouse position.
             p1 = mouseXY;
-            
 
 
-            p2 = getPoint(p1, p3, 0.5f);
+           // p2 = new Point((int)(p3.X - ((p3.X - p1.X) / 2) * 1.1), (int)(p3.Y - ((p3.Y - p1.Y) / 2) * 0.9));
+            p2 = getPoint(p3, p1, 0.5f);
             p2.Y -= Math.Abs(p1.X - p3.X)/4;
 
             NewCurve(p1, p2, p3);
@@ -185,16 +189,6 @@ class MainState : BasicState
         e.Graphics.FillRectangle(Brushes.Gray, new Rectangle(0, 700, 1440, 10));
     }
 
-    public Point getPoint(Point point1, Point point2, float perc)
-    {
-        //Finds the distance between two points and then multiplies
-        //it by a percentage to find a position between them.
-        //As the curve progresses it goes further along the guide line
-        //as it multiplies it by a bigger percentage (i).
-        Point length = new Point(point2.X - point1.X, point2.Y - point1.Y);
-
-        Point point = new Point((int)(point1.X + (length.X * perc)), (int)(point1.Y + (length.Y * perc)));
-        return point;
-    }
 }
 
+//double angle = Math.Atan(dX / dY) * (180 / Math.PI);
